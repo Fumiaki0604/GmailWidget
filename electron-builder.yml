@@ -1,0 +1,19 @@
+appId: com.gmail-widget.app
+productName: GmailWidget
+directories:
+  output: dist-app
+files:
+  - dist/**/*
+  - src/renderer/**/*
+  - package.json
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: src/renderer/icon.ico
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true

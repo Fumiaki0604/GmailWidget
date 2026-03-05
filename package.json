@@ -1,0 +1,28 @@
+{
+  "name": "gmail-widget",
+  "version": "1.0.0",
+  "description": "Gmail重要メール常駐ウィジェット",
+  "main": "dist/main/main.js",
+  "scripts": {
+    "start": "tsc && electron .",
+    "dev": "concurrently \"tsc -w\" \"electron .\"",
+    "build": "tsc && electron-builder",
+    "build:win": "tsc && electron-builder --win"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "dotenv": "^16.4.5",
+    "electron-store": "^8.2.0",
+    "googleapis": "^144.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "concurrently": "^9.0.0",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "typescript": "^5.7.0"
+  }
+}

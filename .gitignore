@@ -1,0 +1,12 @@
+node_modules/
+dist/
+dist-app/
+
+# 認証情報・シークレット（絶対にコミットしない）
+.env
+src/credentials.json
+src/token.json
+
+# OS
+.DS_Store
+Thumbs.db

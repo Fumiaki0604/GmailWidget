@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>案A: リキッドグラス</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3e 50%, #0f1a2a 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    gap: 12px;
+  }
+  .label { color: #666; font-size: 12px; letter-spacing: 1px; }
+  .widget {
+    width: 380px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    padding: 32px 28px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  .icon { font-size: 28px; }
+  .title { color: #e8e8f0; font-size: 17px; font-weight: 600; }
+  .subtitle { color: #888; font-size: 12px; margin-top: 2px; }
+  .section-label {
+    color: #aaa;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+  .account-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+  .account-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+  }
+  .account-item:hover { border-color: rgba(240,165,0,0.4); background: rgba(240,165,0,0.05); }
+  .account-item.selected { border-color: #f0a500; background: rgba(240,165,0,0.1); }
+  .radio {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .account-item.selected .radio { border-color: #f0a500; }
+  .radio-dot { width: 8px; height: 8px; border-radius: 50%; background: #f0a500; display: none; }
+  .account-item.selected .radio-dot { display: block; }
+  .account-info { flex: 1; }
+  .account-name { color: #e8e8f0; font-size: 14px; font-weight: 500; }
+  .account-email { color: #888; font-size: 12px; }
+  .login-btn {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, #f0a500, #e09000);
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(240,165,0,0.3);
+  }
+  .login-btn:hover { box-shadow: 0 4px 24px rgba(240,165,0,0.5); transform: translateY(-1px); }
+  .note { color: #555; font-size: 11px; text-align: center; margin-top: 14px; }
+</style>
+</head>
+<body>
+  <div class="label">案A — リキッドグラス</div>
+  <div class="widget">
+    <div class="header">
+      <span class="icon">📧</span>
+      <div>
+        <div class="title">Gmail重要メール</div>
+        <div class="subtitle">重要なメールだけ、手元に届く</div>
+      </div>
+    </div>
+    <div class="section-label">アカウントを選択</div>
+    <div class="account-list">
+      <div class="account-item selected" onclick="select(this)">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="account-info">
+          <div class="account-name">佐藤 史渉</div>
+          <div class="account-email">fumiaki@gmail.com</div>
+        </div>
+      </div>
+      <div class="account-item" onclick="select(this)">
+        <div class="radio"><div class="radio-dot"></div></div>
+        <div class="account-info">
+          <div class="account-name">佐藤 史渉（仕事用）</div>
+          <div class="account-email">sato@ecbeing.co.jp</div>
+        </div>
+      </div>
+    </div>
+    <button class="login-btn" type="button">
+      <span>G</span> Googleでサインイン
+    </button>
+    <div class="note">※ 実際の認証は行いません（プロトタイプ）</div>
+  </div>
+  <script>
+    function select(el) {
+      document.querySelectorAll('.account-item').forEach(i => i.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+  </script>
+</body>
+</html>

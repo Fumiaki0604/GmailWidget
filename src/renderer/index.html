@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gmail重要メール</title>
+<style>
+  /* --- Reset & Base --- */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3e 50%, #0f1a2a 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding: 24px;
+  }
+
+  /* --- Widget Container --- */
+  .widget-container {
+    width: 380px;
+  }
+
+  /* --- Phase Switching --- */
+  .phase { display: none; }
+  .phase.active { display: block; }
+
+  /* --- Glass Card --- */
+  .glass {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* --- Design Tokens --- */
+  :root {
+    --amber: #f0a500;
+    --amber-dark: #e09000;
+    --text: #e8e8f0;
+    --sub: #888;
+    --border: rgba(255,255,255,0.1);
+  }
+
+  /* =============================
+     S01: Login
+     ============================= */
+  .s01-body { padding: 32px 28px; }
+  .s01-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  .s01-icon { font-size: 28px; }
+  .s01-title { color: var(--text); font-size: 17px; font-weight: 600; }
+  .s01-subtitle { color: var(--sub); font-size: 12px; margin-top: 2px; }
+
+  .section-label {
+    color: var(--sub);
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .account-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+  .account-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .account-item:hover { border-color: rgba(240,165,0,0.4); background: rgba(240,165,0,0.05); }
+  .account-item.selected { border-color: var(--amber); background: rgba(240,165,0,0.1); }
+  .radio {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .account-item.selected .radio { border-color: var(--amber); }
+  .radio-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); display: none; }
+  .account-item.selected .radio-dot { display: block; }
+  .account-name { color: var(--text); font-size: 14px; font-weight: 500; }
+  .account-email { color: var(--sub); font-size: 12px; }
+
+  .btn-amber {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, var(--amber), var(--amber-dark));
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(240,165,0,0.3);
+  }
+  .btn-amber:hover { box-shadow: 0 4px 24px rgba(240,165,0,0.5); transform: translateY(-1px); }
+  .btn-amber:disabled { opacity: 0.7; cursor: default; transform: none; box-shadow: none; }
+
+  .note { color: #555; font-size: 12px; text-align: center; margin-top: 14px; }
+
+  /* =============================
+     S02: Main
+     ============================= */
+  .s02-header {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    gap: 6px;
+  }
+  .s02-title-area { flex: 1; min-width: 0; }
+  .s02-title {
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .badge {
+    background: rgba(240,165,0,0.2);
+    color: var(--amber);
+    font-size: 12px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .s02-meta { color: var(--sub); font-size: 12px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .icon-btn {
+    width: 32px; height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.04);
+    color: var(--sub);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .icon-btn:hover { border-color: rgba(240,165,0,0.4); color: var(--amber); }
+
+  .email-list { max-height: 440px; overflow-y: auto; }
+  .email-card {
+    padding: 13px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .email-card:hover { background: rgba(255,255,255,0.04); }
+  .email-card:last-child { border-bottom: none; }
+  .email-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .email-score { font-size: 12px; flex-shrink: 0; line-height: 1.6; }
+  .email-from { color: var(--text); font-size: 13px; font-weight: 600; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .email-time { color: var(--sub); font-size: 12px; flex-shrink: 0; }
+  .email-subject { color: #bbb; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .empty-state { padding: 48px 24px; text-align: center; color: var(--sub); font-size: 14px; line-height: 1.8; }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+  .s02-footer { padding: 12px 16px; border-top: 1px solid var(--border); }
+  .btn-ghost {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--sub);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-ghost:hover { border-color: rgba(240,165,0,0.4); color: var(--amber); }
+
+  /* =============================
+     S03: Detail
+     ============================= */
+  .sub-header {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    gap: 8px;
+  }
+  .back-btn {
+    background: none;
+    border: none;
+    color: var(--amber);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .sub-header-title { color: var(--text); font-size: 15px; font-weight: 600; }
+
+  .s03-body { padding: 18px 16px; }
+
+  .score-card {
+    background: rgba(240,165,0,0.08);
+    border: 1px solid rgba(240,165,0,0.2);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .score-stars { font-size: 18px; margin-bottom: 4px; }
+  .score-lbl { color: var(--amber); font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+  .score-reason { color: var(--sub); font-size: 12px; line-height: 1.5; }
+
+  .meta-list { margin-bottom: 18px; }
+  .meta-row {
+    display: flex;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 13px;
+  }
+  .meta-row:last-child { border-bottom: none; }
+  .meta-key { color: var(--sub); min-width: 40px; flex-shrink: 0; }
+  .meta-val { color: var(--text); flex: 1; word-break: break-all; }
+
+  .action-col { display: flex; flex-direction: column; gap: 10px; }
+  .btn-outline {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    color: var(--sub);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-outline:hover { border-color: rgba(240,165,0,0.4); color: var(--amber); }
+
+  /* =============================
+     S04: Settings
+     ============================= */
+  .s04-body { padding: 16px; max-height: 460px; overflow-y: auto; }
+  .settings-sec { margin-bottom: 22px; }
+  .settings-lbl {
+    color: var(--sub);
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; min-height: 10px; }
+  .tag {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(240,165,0,0.1);
+    border: 1px solid rgba(240,165,0,0.3);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+    color: var(--amber);
+  }
+  .tag-del {
+    background: none;
+    border: none;
+    color: rgba(240,165,0,0.6);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 0 0 2px;
+  }
+  .tag-del:hover { color: var(--amber); }
+
+  .input-row { display: flex; gap: 8px; }
+  .input-text {
+    flex: 1;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-text:focus { border-color: rgba(240,165,0,0.5); }
+  .input-text::placeholder { color: #555; }
+
+  .btn-add {
+    padding: 8px 14px;
+    background: rgba(240,165,0,0.15);
+    border: 1px solid rgba(240,165,0,0.3);
+    border-radius: 8px;
+    color: var(--amber);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .btn-add:hover { background: rgba(240,165,0,0.25); }
+
+  .num-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .num-row:last-child { border-bottom: none; }
+  .num-label { color: var(--text); font-size: 13px; flex: 1; }
+  .input-num {
+    width: 60px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    color: var(--text);
+    font-size: 13px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-num:focus { border-color: rgba(240,165,0,0.5); }
+  .num-unit { color: var(--sub); font-size: 12px; }
+
+  .s04-footer { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+  .btn-danger {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    color: #e05555;
+    border: 1px solid rgba(224,85,85,0.3);
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-danger:hover { background: rgba(224,85,85,0.1); border-color: rgba(224,85,85,0.6); }
+
+  /* =============================
+     S05: AI Overlay
+     ============================= */
+  #s05-overlay {
+    display: none;
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(8,8,20,0.88);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    border-radius: 16px;
+  }
+  #s05-overlay.visible { display: flex; }
+
+  .ai-card {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 24px 22px;
+    width: 280px;
+    text-align: center;
+  }
+  .ai-icon { font-size: 32px; margin-bottom: 12px; }
+  .ai-title { color: var(--text); font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .ai-sub { color: var(--sub); font-size: 12px; margin-bottom: 16px; min-height: 18px; }
+  .prog-bg { background: rgba(255,255,255,0.1); border-radius: 4px; height: 6px; overflow: hidden; margin-bottom: 8px; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, var(--amber), var(--amber-dark)); border-radius: 4px; width: 0%; transition: width 0.08s linear; }
+  .ai-pct { color: var(--amber); font-size: 12px; font-weight: 600; }
+
+  /* =============================
+     Toast
+     ============================= */
+  #toast {
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(22,22,40,0.96);
+    border: 1px solid rgba(240,165,0,0.4);
+    border-radius: 10px;
+    padding: 10px 18px;
+    color: var(--text);
+    font-size: 13px;
+    z-index: 9999;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    white-space: nowrap;
+  }
+  #toast.show { display: block; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="widget-container">
+
+  <!-- ====== S01: Login ====== -->
+  <div id="phase-login" class="phase active">
+    <div class="glass">
+      <div class="s01-body">
+        <div class="s01-header">
+          <span class="s01-icon">📧</span>
+          <div>
+            <div class="s01-title">Gmail重要メール</div>
+            <div class="s01-subtitle">重要なメールだけ、手元に届く</div>
+          </div>
+        </div>
+        <div class="section-label">アカウントを選択</div>
+        <div class="account-list">
+          <div class="account-item selected" onclick="selectAccount(this,'fumiaki@gmail.com')">
+            <div class="radio"><div class="radio-dot"></div></div>
+            <div>
+              <div class="account-name">佐藤 史渉</div>
+              <div class="account-email">fumiaki@gmail.com</div>
+            </div>
+          </div>
+          <div class="account-item" onclick="selectAccount(this,'sato@ecbeing.co.jp')">
+            <div class="radio"><div class="radio-dot"></div></div>
+            <div>
+              <div class="account-name">佐藤 史渉（仕事用）</div>
+              <div class="account-email">sato@ecbeing.co.jp</div>
+            </div>
+          </div>
+        </div>
+        <button type="button" id="login-btn" class="btn-amber" onclick="doLogin()">
+          <span>G</span> Googleでサインイン
+        </button>
+        <div class="note">※ 実際の認証は行いません（プロトタイプ）</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== S02: Main ====== -->
+  <div id="phase-main" class="phase">
+    <div class="glass">
+      <div class="s02-header">
+        <div class="s02-title-area">
+          <div class="s02-title">
+            📧 重要メール
+            <span class="badge" id="badge"></span>
+          </div>
+          <div class="s02-meta" id="s02-meta">最終確認: — | —</div>
+        </div>
+        <button type="button" class="icon-btn" onclick="goToSettings()" title="設定">⚙</button>
+        <button type="button" class="icon-btn" id="refresh-btn" onclick="doRefresh()" title="更新">🔄</button>
+      </div>
+      <div class="email-list" id="email-list"></div>
+      <div class="s02-footer" id="s02-footer">
+        <button type="button" class="btn-ghost" onclick="markAllRead()">すべて確認済みにする ✓</button>
+      </div>
+      <!-- S05: AI overlay (inside S02 glass card) -->
+      <div id="s05-overlay">
+        <div class="ai-card">
+          <div class="ai-icon">🤖</div>
+          <div class="ai-title">AIが重要度を分析中...</div>
+          <div class="ai-sub" id="ai-sub"></div>
+          <div class="prog-bg"><div class="prog-fill" id="prog-fill"></div></div>
+          <div class="ai-pct" id="ai-pct">0%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== S03: Detail ====== -->
+  <div id="phase-detail" class="phase">
+    <div class="glass">
+      <div class="sub-header">
+        <button type="button" class="back-btn" onclick="goToMain()">← 戻る</button>
+      </div>
+      <div class="s03-body">
+        <div class="score-card">
+          <div class="score-stars" id="d-stars"></div>
+          <div class="score-lbl" id="d-score-lbl"></div>
+          <div class="score-reason" id="d-reason"></div>
+        </div>
+        <div class="meta-list">
+          <div class="meta-row">
+            <span class="meta-key">From</span>
+            <span class="meta-val" id="d-from"></span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-key">件名</span>
+            <span class="meta-val" id="d-subject"></span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-key">受信</span>
+            <span class="meta-val" id="d-time"></span>
+          </div>
+        </div>
+        <div class="action-col">
+          <button type="button" class="btn-amber" onclick="openGmail()">Gmailで開く 🔗</button>
+          <button type="button" class="btn-outline" id="mark-read-btn" onclick="markCurrentRead()">確認済みにする ✓</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== S04: Settings ====== -->
+  <div id="phase-settings" class="phase">
+    <div class="glass">
+      <div class="sub-header">
+        <button type="button" class="back-btn" onclick="goToMain()">←</button>
+        <span class="sub-header-title">設定</span>
+      </div>
+      <div class="s04-body">
+        <div class="settings-sec">
+          <div class="settings-lbl">ホワイトリスト（ドメイン / メアド）</div>
+          <div class="tag-list" id="whitelist-tags"></div>
+          <div class="input-row">
+            <input type="text" class="input-text" id="whitelist-input" placeholder="ecbeing.co.jp"
+              onkeydown="if(event.key==='Enter')addWhitelist()">
+            <button type="button" class="btn-add" onclick="addWhitelist()">追加</button>
+          </div>
+        </div>
+        <div class="settings-sec">
+          <div class="settings-lbl">重要キーワード</div>
+          <div class="tag-list" id="keyword-tags"></div>
+          <div class="input-row">
+            <input type="text" class="input-text" id="keyword-input" placeholder="至急"
+              onkeydown="if(event.key==='Enter')addKeyword()">
+            <button type="button" class="btn-add" onclick="addKeyword()">追加</button>
+          </div>
+        </div>
+        <div class="settings-sec">
+          <div class="settings-lbl">チェック設定</div>
+          <div class="num-row">
+            <span class="num-label">チェック間隔</span>
+            <input type="number" class="input-num" id="interval-input" min="1" max="60" value="5">
+            <span class="num-unit">分</span>
+          </div>
+          <div class="num-row">
+            <span class="num-label">最低表示スコア</span>
+            <input type="number" class="input-num" id="minscore-input" min="1" max="5" value="4">
+            <span class="num-unit">/ 5</span>
+          </div>
+        </div>
+      </div>
+      <div class="s04-footer">
+        <button type="button" class="btn-amber" onclick="saveSettings()">設定を保存</button>
+        <button type="button" class="btn-danger" onclick="resetToDefault()">サンプルデータに戻す</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /widget-container -->
+
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// Electron IPC型定義（TypeScriptなしのブラウザJSでの型ヒント）
+// ============================================================
+// window.electronAPI は preload.ts で contextBridge.exposeInMainWorld により注入される
+
+// ============================================================
+// Data
+// ============================================================
+const STORAGE_KEY = 'gmail_widget_v1';
+
+const DEFAULT_EMAILS = [
+  { id:'1', from:'tanaka@ecbeing.co.jp', fromName:'田中 健一',
+    subject:'【至急】来週の提案書について確認お願いします',
+    receivedAt:'10:32', receivedDate:'2026-03-03', score:5,
+    scoreReason:'「至急」キーワード検出、ホワイトリストドメイン', isRead:false },
+  { id:'2', from:'billing@aws.amazon.com', fromName:'AWS Billing',
+    subject:'AWS請求書 2026年2月分 ¥124,320',
+    receivedAt:'09:15', receivedDate:'2026-03-03', score:4,
+    scoreReason:'「請求」キーワード検出', isRead:false },
+  { id:'3', from:'yamamoto@client-corp.co.jp', fromName:'山本 部長',
+    subject:'Re: 先日のご提案についてご返答',
+    receivedAt:'昨日 17:30', receivedDate:'2026-03-02', score:5,
+    scoreReason:'返信メール、外部取引先ドメイン', isRead:false },
+  { id:'4', from:'noreply@github.com', fromName:'GitHub',
+    subject:'PR #142 approved: Fix crawler timeout issue',
+    receivedAt:'昨日 08:10', receivedDate:'2026-03-02', score:4,
+    scoreReason:'「approved」キーワード検出', isRead:false }
+];
+
+const NEW_EMAIL = {
+  id:'5', from:'president@ecbeing.co.jp', fromName:'社長室',
+  subject:'【重要】全社員へ：来月からの新制度について',
+  receivedAt:'たった今', receivedDate:'2026-03-03', score:5,
+  scoreReason:'「重要」キーワード検出、ホワイトリストドメイン', isRead:false
+};
+
+const DEFAULT_SETTINGS = {
+  whitelist: ['ecbeing.co.jp', 'client-corp.co.jp'],
+  keywords: ['至急', '請求', '締切'],
+  intervalMin: 5,
+  minScore: 4,
+  gmailUser: null
+};
+
+// ============================================================
+// State
+// ============================================================
+const state = {
+  currentPhase: 'login',
+  gmailUser: null,
+  currentEmail: null,
+  isUpdating: false,
+  hasAddedNewEmail: false,
+  emails: [],
+  settings: {}
+};
+
+// ============================================================
+// Storage
+// ============================================================
+function loadData() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); }
+  catch(e) { return null; }
+}
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    emails: state.emails,
+    settings: state.settings,
+    hasAddedNewEmail: state.hasAddedNewEmail
+  }));
+}
+
+// ============================================================
+// Phase Switching
+// ============================================================
+function switchPhase(name) {
+  document.querySelectorAll('.phase').forEach(el => el.classList.remove('active'));
+  const target = document.getElementById('phase-' + name);
+  if (target) {
+    target.classList.add('active');
+    state.currentPhase = name;
+  }
+}
+
+// ============================================================
+// Utilities
+// ============================================================
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function nowHHMM() {
+  const d = new Date();
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+// ============================================================
+// S01: Login
+// ============================================================
+let selectedAccount = 'fumiaki@gmail.com';
+
+function selectAccount(el, email) {
+  document.querySelectorAll('.account-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedAccount = email;
+}
+
+async function doLogin() {
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> 認証中...';
+
+  try {
+    // Electron環境: IPC経由でOAuth認証
+    if (window.electronAPI) {
+      const result = await window.electronAPI.startLogin(selectedAccount);
+      if (result.success) {
+        state.gmailUser = result.user;
+        state.settings.gmailUser = result.user;
+        saveData();
+        switchPhase('main');
+        renderMain();
+        // 初回メール取得
+        doRefresh();
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = '<span>G</span> Googleでサインイン';
+        showToast('認証に失敗しました: ' + (result.error || '不明なエラー'));
+      }
+    } else {
+      // ブラウザ（プロトタイプ）モード: モック動作
+      setTimeout(() => {
+        state.gmailUser = selectedAccount;
+        state.settings.gmailUser = selectedAccount;
+        saveData();
+        switchPhase('main');
+        renderMain();
+      }, 500);
+    }
+  } catch (err) {
+    btn.disabled = false;
+    btn.innerHTML = '<span>G</span> Googleでサインイン';
+    showToast('認証エラー: ' + String(err));
+  }
+}
+
+// ============================================================
+// S02: Main
+// ============================================================
+function getUnreadEmails() {
+  // score===0 は AI 未スコアリング → 表示する（Phase 3 完了後は minScore でフィルタ）
+  return state.emails.filter(e => !e.isRead && (e.score === 0 || e.score >= state.settings.minScore));
+}
+
+function renderMain() {
+  const unread = getUnreadEmails();
+
+  // Badge
+  const badge = document.getElementById('badge');
+  badge.textContent = unread.length > 0 ? unread.length + '件' : '';
+  badge.style.display = unread.length > 0 ? '' : 'none';
+
+  // Meta
+  document.getElementById('s02-meta').textContent =
+    '最終確認: ' + nowHHMM() + ' | ' + (state.gmailUser || '—');
+
+  // Email list
+  const listEl = document.getElementById('email-list');
+  if (unread.length === 0) {
+    listEl.innerHTML =
+      '<div class="empty-state">' +
+      '<div class="empty-icon">✅</div>' +
+      '重要なメールはありません<br>' +
+      '<span style="font-size:12px;color:#555;display:block;margin-top:4px;">次の確認まで少々お待ちください</span>' +
+      '</div>';
+  } else {
+    listEl.innerHTML = unread.map(renderEmailCard).join('');
+  }
+
+  // Footer
+  document.getElementById('s02-footer').style.display = unread.length > 0 ? 'block' : 'none';
+}
+
+function renderEmailCard(email) {
+  const stars = '⭐'.repeat(email.score);
+  return (
+    '<div class="email-card" onclick="openDetail(\'' + email.id + '\')">' +
+    '<div class="email-top">' +
+    '<span class="email-score">' + stars + '</span>' +
+    '<span class="email-from">' + esc(email.fromName) + '</span>' +
+    '<span class="email-time">' + esc(email.receivedAt) + '</span>' +
+    '</div>' +
+    '<div class="email-subject">' + esc(email.subject) + '</div>' +
+    '</div>'
+  );
+}
+
+function markAllRead() {
+  state.emails.forEach(e => { e.isRead = true; });
+  saveData();
+  renderMain();
+  showToast('すべて確認済みにしました');
+}
+
+async function doRefresh() {
+  if (state.isUpdating) return;
+  state.isUpdating = true;
+  document.getElementById('refresh-btn').style.display = 'none';
+
+  showAIOverlay(async function() {
+    try {
+      // Electron環境: IPC経由で実際のメールを取得
+      if (window.electronAPI) {
+        const result = await window.electronAPI.fetchEmails();
+        if (result.success && result.emails) {
+          state.emails = result.emails;
+          saveData();
+        }
+      } else {
+        // ブラウザ（プロトタイプ）モード: モック動作
+        if (!state.hasAddedNewEmail) {
+          state.emails.unshift(Object.assign({}, NEW_EMAIL));
+          state.hasAddedNewEmail = true;
+        }
+        saveData();
+      }
+    } catch (err) {
+      showToast('メール取得エラー: ' + String(err));
+    }
+    state.isUpdating = false;
+    document.getElementById('refresh-btn').style.display = '';
+    renderMain();
+    const unread = getUnreadEmails();
+    if (unread.length > 0) showToast(unread.length + '件の重要メールがあります');
+  });
+}
+
+function goToSettings() {
+  renderSettings();
+  switchPhase('settings');
+}
+
+// ============================================================
+// S03: Detail
+// ============================================================
+function openDetail(id) {
+  const email = state.emails.find(e => e.id === id);
+  if (!email) { switchPhase('main'); return; }
+  state.currentEmail = email;
+
+  document.getElementById('d-stars').textContent = '⭐'.repeat(email.score);
+  document.getElementById('d-score-lbl').textContent = '重要度スコア: ' + email.score + '/5';
+  document.getElementById('d-reason').textContent = email.scoreReason;
+  document.getElementById('d-from').textContent = email.fromName + ' <' + email.from + '>';
+  document.getElementById('d-subject').textContent = email.subject;
+  document.getElementById('d-time').textContent = email.receivedAt;
+
+  // "確認済みにする" button: hide if already read
+  document.getElementById('mark-read-btn').style.display = email.isRead ? 'none' : 'block';
+
+  switchPhase('detail');
+}
+
+function openGmail() {
+  window.open('https://mail.google.com', '_blank');
+}
+
+function markCurrentRead() {
+  if (!state.currentEmail) { switchPhase('main'); return; }
+  state.currentEmail.isRead = true;
+  saveData();
+  goToMain();
+  showToast('確認済みにしました');
+}
+
+function goToMain() {
+  switchPhase('main');
+  renderMain();
+}
+
+// ============================================================
+// S04: Settings
+// ============================================================
+function renderSettings() {
+  renderWhitelistTags();
+  renderKeywordTags();
+  document.getElementById('interval-input').value = state.settings.intervalMin;
+  document.getElementById('minscore-input').value = state.settings.minScore;
+}
+
+function renderWhitelistTags() {
+  document.getElementById('whitelist-tags').innerHTML =
+    state.settings.whitelist.map(function(item, i) {
+      return '<span class="tag">' + esc(item) +
+        ' <button type="button" class="tag-del" onclick="removeWhitelist(' + i + ')">×</button></span>';
+    }).join('');
+}
+
+function renderKeywordTags() {
+  document.getElementById('keyword-tags').innerHTML =
+    state.settings.keywords.map(function(item, i) {
+      return '<span class="tag">' + esc(item) +
+        ' <button type="button" class="tag-del" onclick="removeKeyword(' + i + ')">×</button></span>';
+    }).join('');
+}
+
+function addWhitelist() {
+  var val = document.getElementById('whitelist-input').value.trim();
+  if (!val) return;
+  if (state.settings.whitelist.indexOf(val) !== -1) { showToast('すでに追加されています'); return; }
+  state.settings.whitelist.push(val);
+  document.getElementById('whitelist-input').value = '';
+  renderWhitelistTags();
+}
+function removeWhitelist(i) {
+  state.settings.whitelist.splice(i, 1);
+  renderWhitelistTags();
+}
+
+function addKeyword() {
+  var val = document.getElementById('keyword-input').value.trim();
+  if (!val) return;
+  if (state.settings.keywords.indexOf(val) !== -1) { showToast('すでに追加されています'); return; }
+  state.settings.keywords.push(val);
+  document.getElementById('keyword-input').value = '';
+  renderKeywordTags();
+}
+function removeKeyword(i) {
+  state.settings.keywords.splice(i, 1);
+  renderKeywordTags();
+}
+
+function saveSettings() {
+  var interval = parseInt(document.getElementById('interval-input').value, 10);
+  var minScore = parseInt(document.getElementById('minscore-input').value, 10);
+  if (isNaN(interval) || interval < 1 || interval > 60) {
+    showToast('チェック間隔は1〜60で入力してください'); return;
+  }
+  if (isNaN(minScore) || minScore < 1 || minScore > 5) {
+    showToast('スコアは1〜5で入力してください'); return;
+  }
+  state.settings.intervalMin = interval;
+  state.settings.minScore = minScore;
+  saveData();
+  showToast('設定を保存しました');
+  setTimeout(goToMain, 700);
+}
+
+function resetToDefault() {
+  if (!confirm('設定とメール一覧をサンプルデータに戻しますか？')) return;
+  state.emails = DEFAULT_EMAILS.map(function(e) { return Object.assign({}, e); });
+  state.settings = Object.assign({}, DEFAULT_SETTINGS, { gmailUser: state.gmailUser });
+  state.hasAddedNewEmail = false;
+  saveData();
+  renderSettings();
+  showToast('サンプルデータに戻しました');
+}
+
+// ============================================================
+// S05: AI Overlay
+// ============================================================
+var AI_MSGS = ['件名・送信者を解析中', 'ルールフィルタ適用中', 'AI重要度スコアリング中', '結果を反映中'];
+
+function showAIOverlay(onDone) {
+  var overlay = document.getElementById('s05-overlay');
+  var fill    = document.getElementById('prog-fill');
+  var pct     = document.getElementById('ai-pct');
+  var sub     = document.getElementById('ai-sub');
+
+  overlay.classList.add('visible');
+  fill.style.width = '0%';
+  pct.textContent = '0%';
+  sub.textContent = AI_MSGS[0];
+
+  var progress = 0;
+  var msgIdx = 0;
+  var phaseAtStart = state.currentPhase;
+
+  var iv = setInterval(function() {
+    // Guard: abort if phase changed unexpectedly
+    if (state.currentPhase !== phaseAtStart && state.currentPhase !== 'main') {
+      clearInterval(iv);
+      overlay.classList.remove('visible');
+      return;
+    }
+
+    progress += 7;
+    if (progress > 100) progress = 100;
+    fill.style.width = progress + '%';
+    pct.textContent = progress + '%';
+
+    var expectedMsgIdx = Math.min(Math.floor(progress / 25), AI_MSGS.length - 1);
+    if (expectedMsgIdx !== msgIdx) {
+      msgIdx = expectedMsgIdx;
+      sub.textContent = AI_MSGS[msgIdx];
+    }
+
+    if (progress >= 100) {
+      clearInterval(iv);
+      setTimeout(function() {
+        overlay.classList.remove('visible');
+        onDone();
+      }, 200);
+    }
+  }, 60);
+}
+
+// ============================================================
+// Init
+// ============================================================
+async function init() {
+  // Electron環境: メインプロセスから設定を読み込む
+  if (window.electronAPI) {
+    const result = await window.electronAPI.getSettings();
+    if (result && result.settings) {
+      state.settings = Object.assign({}, DEFAULT_SETTINGS, result.settings);
+    }
+    // メール更新イベントのリスナー登録
+    window.electronAPI.onMailUpdate(function(emails) {
+      state.emails = emails;
+      renderMain();
+      var unread = getUnreadEmails();
+      if (unread.length > 0) showToast(unread.length + '件の重要メールがあります');
+    });
+    // 認証状態変化のリスナー登録
+    window.electronAPI.onAuthStateChange(function(user) {
+      if (user) {
+        state.gmailUser = user;
+        state.settings.gmailUser = user;
+        switchPhase('main');
+        renderMain();
+      } else {
+        state.gmailUser = null;
+        switchPhase('login');
+      }
+    });
+  } else {
+    // ブラウザ（プロトタイプ）モード
+    var saved = loadData();
+    if (saved && saved.emails && saved.emails.length > 0) {
+      state.emails = saved.emails;
+      state.settings = Object.assign({}, DEFAULT_SETTINGS, saved.settings || {});
+      state.hasAddedNewEmail = saved.hasAddedNewEmail || false;
+    } else {
+      state.emails = DEFAULT_EMAILS.map(function(e) { return Object.assign({}, e); });
+      state.settings = Object.assign({}, DEFAULT_SETTINGS);
+    }
+  }
+  switchPhase('login');
+}
+
+init();
+</script>
+</body>
+</html>

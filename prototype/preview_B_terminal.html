@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>案B: ターミナル</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Courier New', Consolas, monospace;
+    gap: 12px;
+  }
+  .label { color: #004d18; font-size: 12px; letter-spacing: 1px; font-family: sans-serif; }
+  .widget {
+    width: 380px;
+    background: #0d0d0d;
+    border: 1px solid #003d14;
+    border-radius: 4px;
+    padding: 24px 20px;
+    box-shadow: 0 0 20px rgba(0,255,65,0.1), inset 0 0 40px rgba(0,0,0,0.5);
+  }
+  .titlebar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #003d14;
+  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.r { background: #1a0000; border: 1px solid #330000; }
+  .dot.y { background: #1a1600; border: 1px solid #333000; }
+  .dot.g { background: #001a00; border: 1px solid #003300; }
+  .title-text { color: #004d18; font-size: 11px; margin-left: 6px; }
+  .line { color: #00ff41; font-size: 13px; line-height: 1.8; }
+  .line.dim { color: #004d18; }
+  .line.prompt::before { content: '> '; color: #00cc33; }
+  .progress-bar {
+    margin: 8px 0;
+    color: #00ff41;
+    font-size: 13px;
+  }
+  .bar { color: #00aa22; }
+  .bar-empty { color: #002d0a; }
+  .divider { border: none; border-top: 1px solid #002d0a; margin: 14px 0; }
+  .account-list { margin: 12px 0; }
+  .account-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 0;
+    cursor: pointer;
+    color: #00cc33;
+    font-size: 13px;
+    border-bottom: 1px solid #002d0a;
+  }
+  .account-item:last-child { border-bottom: none; }
+  .account-item.selected { color: #00ff41; }
+  .bracket { color: #004d18; }
+  .account-item.selected .bracket { color: #00ff41; }
+  .num { color: #006622; width: 16px; }
+  .account-item.selected .num { color: #00ff41; }
+  .login-btn {
+    width: 100%;
+    padding: 11px;
+    margin-top: 16px;
+    background: transparent;
+    color: #00ff41;
+    border: 1px solid #00ff41;
+    border-radius: 2px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+  .login-btn:hover {
+    background: rgba(0,255,65,0.1);
+    box-shadow: 0 0 12px rgba(0,255,65,0.3);
+  }
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: #00ff41;
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+    margin-left: 2px;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+</style>
+</head>
+<body>
+  <div class="label">案B — ターミナル</div>
+  <div class="widget">
+    <div class="titlebar">
+      <div class="dot r"></div>
+      <div class="dot y"></div>
+      <div class="dot g"></div>
+      <span class="title-text">gmail_widget_v1.0 — bash</span>
+    </div>
+    <div class="line prompt">GMAIL_WIDGET v1.0</div>
+    <div class="line dim">Initializing AI mail filter...</div>
+    <div class="progress-bar">
+      [<span class="bar">████████████████</span><span class="bar-empty">░░░░</span>] 80%
+    </div>
+    <div class="line dim">Loading rules... OK</div>
+    <div class="line dim">Claude Haiku ready... OK</div>
+    <hr class="divider">
+    <div class="line" style="margin-bottom:8px;">SELECT ACCOUNT:</div>
+    <div class="account-list">
+      <div class="account-item selected" onclick="select(this,'1')">
+        <span class="num">[1]</span>
+        <span>fumiaki@gmail.com</span>
+      </div>
+      <div class="account-item" onclick="select(this,'2')">
+        <span class="num">[2]</span>
+        <span>sato@ecbeing.co.jp</span>
+      </div>
+    </div>
+    <button class="login-btn" type="button">[ AUTHENTICATE ]<span class="cursor"></span></button>
+  </div>
+  <script>
+    let selected = '1';
+    function select(el, num) {
+      document.querySelectorAll('.account-item').forEach(i => i.classList.remove('selected'));
+      el.classList.add('selected');
+      selected = num;
+    }
+  </script>
+</body>
+</html>
