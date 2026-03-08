@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, shell } from 'electron';
+import { ipcMain, BrowserWindow, shell, app } from 'electron';
 import { getSettings, saveSettings } from './store';
 
 // 後のフェーズで実装される関数のプレースホルダ
@@ -64,6 +64,16 @@ export function registerIpcHandlers(mainWindow: BrowserWindow) {
   // 外部URL（Gmail）
   ipcMain.handle('shell:openExternal', (_event, url: string) => {
     shell.openExternal(url);
+  });
+
+  // ログイン時自動起動
+  ipcMain.handle('app:loginItem:get', () => {
+    return app.getLoginItemSettings().openAtLogin;
+  });
+
+  ipcMain.handle('app:loginItem:set', (_event, enabled: boolean) => {
+    app.setLoginItemSettings({ openAtLogin: enabled });
+    return enabled;
   });
 }
 

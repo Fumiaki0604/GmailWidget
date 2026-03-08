@@ -263,6 +263,21 @@
      ============================= */
   .s04-body { padding: 16px; max-height: 460px; overflow-y: auto; }
   .settings-sec { margin-bottom: 22px; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+  .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: rgba(255,255,255,0.1); border-radius: 24px;
+    transition: background 0.2s;
+  }
+  .toggle-slider::before {
+    content: ''; position: absolute;
+    width: 18px; height: 18px; left: 3px; bottom: 3px;
+    background: white; border-radius: 50%; transition: transform 0.2s;
+  }
+  .toggle-switch input:checked + .toggle-slider { background: var(--amber); }
+  .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
   .settings-lbl {
     color: var(--sub);
     font-size: 12px;
@@ -560,6 +575,16 @@
             <span class="num-label">最低表示スコア</span>
             <input type="number" class="input-num" id="minscore-input" min="1" max="5" value="4">
             <span class="num-unit">/ 5</span>
+          </div>
+        </div>
+        <div class="settings-sec">
+          <div class="settings-lbl">システム</div>
+          <div class="toggle-row">
+            <span class="num-label">ログイン時に自動起動</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="autolaunch-toggle" onchange="onAutoLaunchChange(this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
           </div>
         </div>
       </div>
@@ -876,6 +901,20 @@ function renderSettings() {
   renderKeywordTags();
   document.getElementById('interval-input').value = state.settings.intervalMin;
   document.getElementById('minscore-input').value = state.settings.minScore;
+  // 自動起動の現在状態を取得してトグルに反映
+  if (window.electronAPI && window.electronAPI.getLoginItem) {
+    window.electronAPI.getLoginItem().then(function(enabled) {
+      document.getElementById('autolaunch-toggle').checked = !!enabled;
+    });
+  }
+}
+
+function onAutoLaunchChange(enabled) {
+  if (window.electronAPI && window.electronAPI.setLoginItem) {
+    window.electronAPI.setLoginItem(enabled).then(function() {
+      showToast(enabled ? '自動起動を有効にしました' : '自動起動を無効にしました');
+    });
+  }
 }
 
 function renderWhitelistTags() {

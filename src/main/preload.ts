@@ -19,4 +19,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('mail:updated', (_event, emails) => callback(emails)),
   onAuthStateChange: (callback: (user: string | null) => void) =>
     ipcRenderer.on('auth:changed', (_event, user) => callback(user)),
+
+  // ログイン時自動起動
+  getLoginItem: () => ipcRenderer.invoke('app:loginItem:get'),
+  setLoginItem: (enabled: boolean) => ipcRenderer.invoke('app:loginItem:set', enabled),
 });
