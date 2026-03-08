@@ -22,15 +22,24 @@ const SCOPES = [
 ];
 
 function loadCredentials(): { clientId: string; clientSecret: string } {
-  // まず credentials.json を試みる
-  const credPath = path.join(__dirname, '../../src/credentials.json');
-  if (fs.existsSync(credPath)) {
-    const raw = JSON.parse(fs.readFileSync(credPath, 'utf-8')) as CredentialsFile;
-    return {
-      clientId: raw.installed.client_id,
-      clientSecret: raw.installed.client_secret,
-    };
+  // 候補パスを優先順に試みる
+  // 1. 開発時: src/credentials.json
+  // 2. パッケージ済み: extraResources に同梱された credentials.json
+  const candidates = [
+    path.join(__dirname, '../../src/credentials.json'),
+    path.join(process.resourcesPath ?? '', 'credentials.json'),
+  ];
+
+  for (const credPath of candidates) {
+    if (fs.existsSync(credPath)) {
+      const raw = JSON.parse(fs.readFileSync(credPath, 'utf-8')) as CredentialsFile;
+      return {
+        clientId: raw.installed.client_id,
+        clientSecret: raw.installed.client_secret,
+      };
+    }
   }
+
   // フォールバック: .env の値を使う
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     return {

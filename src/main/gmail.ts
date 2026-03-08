@@ -76,7 +76,6 @@ export async function fetchFilteredEmails(): Promise<EmailSummary[]> {
   });
 
   const messages = listRes.data.messages ?? [];
-  console.log(`[gmail] 未読メール取得: ${messages.length} 件`);
   if (messages.length === 0) return [];
 
   // 各メールの詳細を並行取得
@@ -137,7 +136,6 @@ export async function fetchFilteredEmails(): Promise<EmailSummary[]> {
     });
   }
 
-  console.log(`[gmail] 未読メール返却: ${results.length} 件`);
   return results;
 }
 

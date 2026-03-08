@@ -6,14 +6,13 @@ files:
   - dist/**/*
   - src/renderer/**/*
   - package.json
+extraResources:
+  - from: src/credentials.json
+    to: credentials.json
+    filter:
+      - "**/*"
 win:
   target:
-    - target: nsis
+    - target: zip
       arch:
         - x64
-  icon: src/renderer/icon.ico
-nsis:
-  oneClick: false
-  allowToChangeInstallationDirectory: true
-  createDesktopShortcut: true
-  createStartMenuShortcut: true
