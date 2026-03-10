@@ -23,4 +23,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // ログイン時自動起動
   getLoginItem: () => ipcRenderer.invoke('app:loginItem:get'),
   setLoginItem: (enabled: boolean) => ipcRenderer.invoke('app:loginItem:set', enabled),
+
+  // 透明エリアのクリックスルー制御
+  setIgnoreMouseEvents: (ignore: boolean, options?: { forward: boolean }) =>
+    ipcRenderer.send('window:setIgnoreMouseEvents', ignore, options),
 });

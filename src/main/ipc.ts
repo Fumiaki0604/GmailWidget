@@ -66,6 +66,12 @@ export function registerIpcHandlers(mainWindow: BrowserWindow) {
     shell.openExternal(url);
   });
 
+  // 透明エリアのクリックスルー制御
+  ipcMain.on('window:setIgnoreMouseEvents', (event, ignore: boolean, options?: { forward: boolean }) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) win.setIgnoreMouseEvents(ignore, options);
+  });
+
   // ログイン時自動起動
   ipcMain.handle('app:loginItem:get', () => {
     return app.getLoginItemSettings().openAtLogin;
