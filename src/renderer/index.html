@@ -7,20 +7,21 @@
 <style>
   /* --- Reset & Base --- */
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3e 50%, #0f1a2a 100%);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  html, body {
+    background: transparent;
+    margin: 0; padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    padding: 24px;
   }
 
   /* --- Widget Container --- */
   .widget-container {
     width: 380px;
+    padding: 12px;
   }
+
+  /* --- Drag region --- */
+  .drag-handle { -webkit-app-region: drag; }
+  .no-drag { -webkit-app-region: no-drag; }
 
   /* --- Phase Switching --- */
   .phase { display: none; }
@@ -462,7 +463,7 @@
   <div id="phase-login" class="phase active">
     <div class="glass">
       <div class="s01-body">
-        <div class="s01-header">
+        <div class="s01-header drag-handle">
           <span class="s01-icon">📧</span>
           <div>
             <div class="s01-title">Gmail重要メール</div>
@@ -497,7 +498,7 @@
   <!-- ====== S02: Main ====== -->
   <div id="phase-main" class="phase">
     <div class="glass">
-      <div class="s02-header">
+      <div class="s02-header drag-handle">
         <div class="s02-title-area">
           <div class="s02-title">
             📧 重要メール
@@ -505,10 +506,10 @@
           </div>
           <div class="s02-meta" id="s02-meta">最終確認: — | —</div>
         </div>
-        <button type="button" class="icon-btn" onclick="goToSettings()" title="設定">⚙</button>
-        <button type="button" class="icon-btn" id="refresh-btn" onclick="doRefresh()" title="更新">🔄</button>
+        <button type="button" class="icon-btn no-drag" onclick="goToSettings()" title="設定">⚙</button>
+        <button type="button" class="icon-btn no-drag" id="refresh-btn" onclick="doRefresh()" title="更新">🔄</button>
       </div>
-      <div class="email-list" id="email-list"></div>
+      <div class="email-list no-drag" id="email-list"></div>
       <div class="s02-footer" id="s02-footer">
         <button type="button" class="btn-ghost" onclick="markAllRead()">すべて確認済みにする ✓</button>
       </div>
@@ -528,8 +529,8 @@
   <!-- ====== S03: Detail ====== -->
   <div id="phase-detail" class="phase">
     <div class="glass">
-      <div class="sub-header">
-        <button type="button" class="back-btn" onclick="goToMain()">← 戻る</button>
+      <div class="sub-header drag-handle">
+        <button type="button" class="back-btn no-drag" onclick="goToMain()">← 戻る</button>
       </div>
       <div class="s03-body">
         <div class="score-card">
@@ -562,8 +563,8 @@
   <!-- ====== S04: Settings ====== -->
   <div id="phase-settings" class="phase">
     <div class="glass">
-      <div class="sub-header">
-        <button type="button" class="back-btn" onclick="goToMain()">←</button>
+      <div class="sub-header drag-handle">
+        <button type="button" class="back-btn no-drag" onclick="goToMain()">←</button>
         <span class="sub-header-title">設定</span>
       </div>
       <div class="s04-body">

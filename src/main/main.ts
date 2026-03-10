@@ -42,7 +42,8 @@ function createWindow() {
     height: 640,
     resizable: false,
     frame: false,           // フレームレス（ウィジェット風）
-    transparent: false,
+    transparent: true,
+    backgroundColor: '#00000000',
     alwaysOnTop: false,
     skipTaskbar: true,      // タスクバーに表示しない（トレイのみ）
     webPreferences: {
