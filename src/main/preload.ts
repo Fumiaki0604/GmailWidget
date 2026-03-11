@@ -24,6 +24,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getLoginItem: () => ipcRenderer.invoke('app:loginItem:get'),
   setLoginItem: (enabled: boolean) => ipcRenderer.invoke('app:loginItem:set', enabled),
 
+  // 外部URL を既定ブラウザで開く
+  openExternal: (url: string) => ipcRenderer.invoke('shell:openExternal', url),
+
   // 透明エリアのクリックスルー制御
   setIgnoreMouseEvents: (ignore: boolean, options?: { forward: boolean }) =>
     ipcRenderer.send('window:setIgnoreMouseEvents', ignore, options),

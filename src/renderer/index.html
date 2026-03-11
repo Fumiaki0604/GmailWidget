@@ -906,7 +906,15 @@ function openDetail(id) {
 }
 
 function openGmail() {
-  window.open('https://mail.google.com', '_blank');
+  var url = 'https://mail.google.com';
+  if (state.currentEmail && state.currentEmail.id) {
+    url = 'https://mail.google.com/mail/u/0/#all/' + state.currentEmail.id;
+  }
+  if (window.electronAPI && window.electronAPI.openExternal) {
+    window.electronAPI.openExternal(url);
+  } else {
+    window.open(url, '_blank');
+  }
 }
 
 function markCurrentRead() {
