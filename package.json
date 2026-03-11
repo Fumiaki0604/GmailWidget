@@ -4,8 +4,8 @@
   "description": "Gmail重要メール常駐ウィジェット",
   "main": "dist/main/main.js",
   "scripts": {
-    "start": "tsc && cross-env ELECTRON_RUN_AS_NODE= electron .",
-    "dev": "concurrently \"tsc -w\" \"cross-env ELECTRON_RUN_AS_NODE= electron .\"",
+    "start": "tsc && electron .",
+    "dev": "concurrently \"tsc -w\" \"electron .\"",
     "build": "tsc && electron-builder",
     "build:win": "tsc && electron-builder --win",
     "build:pack": "tsc && electron-packager . GmailWidget --platform=win32 --arch=x64 --out=dist-pack --overwrite --prune=true"
