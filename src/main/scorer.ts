@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { EmailSummary } from './gmail';
+import { getSenderFeedback } from './store';
 
 interface ScoringResult {
   id: string;
@@ -45,13 +46,27 @@ export async function scoreEmails(emails: EmailSummary[]): Promise<EmailSummary[
     results.forEach((r) => scored.set(r.id, { score: r.score, reason: r.reason }));
   }
 
+  const senderFeedback = getSenderFeedback();
+
   return emails.map((email) => {
     const result = scored.get(email.id);
     if (!result) return email;
 
     // baseScore（ホワイトリスト/キーワード加点）があれば +1 してクリッピング
     const bonus = email.score > 0 ? 1 : 0;
-    const finalScore = Math.min(5, result.score + bonus);
+    let finalScore = Math.min(5, result.score + bonus);
+
+    // 送信者フィードバック補正（送信者優先度：高）
+    const fb = senderFeedback[email.from] ?? 0;
+    if (fb >= 3) {
+      finalScore = Math.max(finalScore, 5);   // 信頼済み送信者 → 常に最重要
+    } else if (fb >= 1) {
+      finalScore = Math.min(5, finalScore + 1);
+    } else if (fb <= -4) {
+      finalScore = Math.min(finalScore, 1);   // 不要送信者 → 最低スコア
+    } else if (fb <= -2) {
+      finalScore = Math.max(1, finalScore - 1);
+    }
 
     return {
       ...email,

@@ -16,6 +16,7 @@ interface StoreSchema {
   cache: {
     scoredEmailIds: string[];  // 重複評価防止
   };
+  senderFeedback: Record<string, number>;  // 送信者フィードバック蓄積値
 }
 
 const defaultSettings: StoreSchema['settings'] = {
@@ -37,6 +38,7 @@ export const store = new Store<StoreSchema>({
     cache: {
       scoredEmailIds: [],
     },
+    senderFeedback: {},
   },
   encryptionKey: 'gmail-widget-store-key',  // electron-storeの暗号化
 });
@@ -78,4 +80,15 @@ export function addScoredEmailId(id: string) {
     const updated = [...ids, id].slice(-1000);
     store.set('cache.scoredEmailIds', updated);
   }
+}
+
+export function getSenderFeedback(): Record<string, number> {
+  return store.get('senderFeedback', {});
+}
+
+export function updateSenderFeedback(email: string, delta: number) {
+  const feedback = getSenderFeedback();
+  const current = feedback[email] ?? 0;
+  const next = Math.max(-10, Math.min(10, current + delta));
+  store.set('senderFeedback', { ...feedback, [email]: next });
 }

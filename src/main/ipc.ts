@@ -1,5 +1,5 @@
 import { ipcMain, BrowserWindow, shell, app } from 'electron';
-import { getSettings, saveSettings } from './store';
+import { getSettings, saveSettings, updateSenderFeedback } from './store';
 
 // 後のフェーズで実装される関数のプレースホルダ
 let startAuthFlow: ((account: string) => Promise<string>) | null = null;
@@ -70,6 +70,12 @@ export function registerIpcHandlers(mainWindow: BrowserWindow) {
   ipcMain.on('window:setIgnoreMouseEvents', (event, ignore: boolean, options?: { forward: boolean }) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (win) win.setIgnoreMouseEvents(ignore, options);
+  });
+
+  // 送信者フィードバック
+  ipcMain.handle('feedback:submit', (_event, senderEmail: string, isImportant: boolean) => {
+    updateSenderFeedback(senderEmail, isImportant ? +1 : -1);
+    return { success: true };
   });
 
   // ログイン時自動起動

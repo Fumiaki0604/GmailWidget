@@ -398,6 +398,56 @@
   .btn-danger:hover { background: rgba(224,85,85,0.1); border-color: rgba(224,85,85,0.6); }
 
   /* =============================
+     S03: Feedback
+     ============================= */
+  .feedback-section {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .feedback-label {
+    color: var(--sub);
+    font-size: 12px;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .feedback-row {
+    display: flex;
+    gap: 8px;
+  }
+  .btn-feedback-pos, .btn-feedback-neg {
+    flex: 1;
+    padding: 9px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid;
+  }
+  .btn-feedback-pos {
+    background: rgba(80,200,120,0.08);
+    border-color: rgba(80,200,120,0.3);
+    color: #50c878;
+  }
+  .btn-feedback-pos:hover { background: rgba(80,200,120,0.18); border-color: rgba(80,200,120,0.6); }
+  .btn-feedback-neg {
+    background: rgba(224,85,85,0.08);
+    border-color: rgba(224,85,85,0.3);
+    color: #e05555;
+  }
+  .btn-feedback-neg:hover { background: rgba(224,85,85,0.18); border-color: rgba(224,85,85,0.6); }
+  .btn-feedback-done {
+    flex: 1;
+    padding: 9px;
+    border-radius: 8px;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--sub);
+    cursor: default;
+  }
+
+  /* =============================
      S05: AI Overlay
      ============================= */
   #s05-overlay {
@@ -555,6 +605,13 @@
         <div class="action-col">
           <button type="button" class="btn-amber" onclick="openGmail()">Gmailで開く 🔗</button>
           <button type="button" class="btn-outline" id="mark-read-btn" onclick="markCurrentRead()">確認済みにする ✓</button>
+        </div>
+        <div class="feedback-section">
+          <div class="feedback-label">この重要度判定は正しかった？</div>
+          <div class="feedback-row" id="feedback-row">
+            <button type="button" class="btn-feedback-pos" id="fb-pos" onclick="submitFeedback(true)">👍 重要だった</button>
+            <button type="button" class="btn-feedback-neg" id="fb-neg" onclick="submitFeedback(false)">👎 重要でなかった</button>
+          </div>
         </div>
       </div>
     </div>
@@ -902,6 +959,11 @@ function openDetail(id) {
   // "確認済みにする" button: hide if already read
   document.getElementById('mark-read-btn').style.display = email.isRead ? 'none' : 'block';
 
+  // フィードバックボタンをリセット
+  document.getElementById('feedback-row').innerHTML =
+    '<button type="button" class="btn-feedback-pos" id="fb-pos" onclick="submitFeedback(true)">👍 重要だった</button>' +
+    '<button type="button" class="btn-feedback-neg" id="fb-neg" onclick="submitFeedback(false)">👎 重要でなかった</button>';
+
   switchPhase('detail');
 }
 
@@ -915,6 +977,21 @@ function openGmail() {
   } else {
     window.open(url, '_blank');
   }
+}
+
+async function submitFeedback(isImportant) {
+  if (!state.currentEmail) return;
+  var senderEmail = state.currentEmail.from;
+  var msg = isImportant ? '重要だったと記録しました。次回から学習します' : '重要でなかったと記録しました。次回から学習します';
+
+  if (window.electronAPI && window.electronAPI.submitFeedback) {
+    await window.electronAPI.submitFeedback(senderEmail, isImportant);
+  }
+
+  // ボタンを評価済み表示に切り替え
+  document.getElementById('feedback-row').innerHTML =
+    '<button type="button" class="btn-feedback-done" disabled>✓ 評価済み</button>';
+  showToast(msg);
 }
 
 function markCurrentRead() {

@@ -27,6 +27,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 外部URL を既定ブラウザで開く
   openExternal: (url: string) => ipcRenderer.invoke('shell:openExternal', url),
 
+  // 送信者フィードバック
+  submitFeedback: (senderEmail: string, isImportant: boolean) =>
+    ipcRenderer.invoke('feedback:submit', senderEmail, isImportant),
+
   // 透明エリアのクリックスルー制御
   setIgnoreMouseEvents: (ignore: boolean, options?: { forward: boolean }) =>
     ipcRenderer.send('window:setIgnoreMouseEvents', ignore, options),
