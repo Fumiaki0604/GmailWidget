@@ -111,6 +111,37 @@ function getRandomPort(): Promise<number> {
 }
 
 /**
+ * 保存済みトークンを検証して返す（OAuthフローを開かない）
+ * トークンが無効な場合は null を返す
+ */
+export async function tryRestoreAuth(): Promise<string | null> {
+  const storedAuth = getAuth();
+  if (!storedAuth.accessToken || !storedAuth.refreshToken) return null;
+
+  const oauth2Client = createOAuth2Client();
+  oauth2Client.setCredentials({
+    access_token: storedAuth.accessToken,
+    refresh_token: storedAuth.refreshToken,
+    expiry_date: storedAuth.expiryDate ?? undefined,
+  });
+
+  try {
+    const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
+    const me = await oauth2.userinfo.get();
+    const email = me.data.email ?? 'unknown';
+    const refreshed = oauth2Client.credentials;
+    saveAuth({
+      accessToken: refreshed.access_token ?? storedAuth.accessToken,
+      refreshToken: refreshed.refresh_token ?? storedAuth.refreshToken,
+      expiryDate: refreshed.expiry_date ?? storedAuth.expiryDate,
+    });
+    return email;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * OAuth2 認証フローを実行し、認証済みユーザーのメールアドレスを返す
  */
 export async function startAuthFlow(): Promise<string> {
