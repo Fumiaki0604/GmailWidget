@@ -1,5 +1,5 @@
 import { ipcMain, BrowserWindow, shell, app } from 'electron';
-import { getSettings, saveSettings, updateSenderFeedback } from './store';
+import { getSettings, saveSettings, updateSenderFeedback, getAuth } from './store';
 
 // 後のフェーズで実装される関数のプレースホルダ
 let startAuthFlow: ((account: string) => Promise<string>) | null = null;
@@ -8,6 +8,21 @@ let fetchEmailsFn: (() => Promise<object[]>) | null = null;
 
 export function registerIpcHandlers(mainWindow: BrowserWindow) {
   // 認証
+  ipcMain.handle('auth:restore', async () => {
+    if (!startAuthFlow) return { success: false };
+    const storedAuth = getAuth();
+    if (!storedAuth.accessToken || !storedAuth.refreshToken) {
+      return { success: false };
+    }
+    try {
+      const user = await startAuthFlow('');
+      mainWindow.webContents.send('auth:changed', user);
+      return { success: true, user };
+    } catch {
+      return { success: false };
+    }
+  });
+
   ipcMain.handle('auth:start', async (_event, account: string) => {
     if (!startAuthFlow) {
       return { success: false, error: 'Auth not initialized' };

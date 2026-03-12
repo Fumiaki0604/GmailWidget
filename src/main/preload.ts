@@ -3,6 +3,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 // レンダラーに公開するAPI（contextIsolation対応）
 contextBridge.exposeInMainWorld('electronAPI', {
   // 認証
+  restoreAuth: () => ipcRenderer.invoke('auth:restore'),
   startLogin: (account: string) => ipcRenderer.invoke('auth:start', account),
   logout: () => ipcRenderer.invoke('auth:logout'),
 

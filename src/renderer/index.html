@@ -1176,6 +1176,12 @@ async function init() {
         switchPhase('login');
       }
     });
+    // 保存済みトークンで自動ログイン試行
+    var restoreResult = await window.electronAPI.restoreAuth();
+    if (restoreResult && restoreResult.success) {
+      // onAuthStateChange が呼ばれて main フェーズに遷移するため、ここでは何もしない
+      return;
+    }
   } else {
     // ブラウザ（プロトタイプ）モード
     var saved = loadData();
